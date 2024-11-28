@@ -9,7 +9,12 @@ const modelName = process.env.GEMINI_MODEL_NAME;
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ model: modelName });
 
-const prompt = "Explain how AI works";
+const prompt = "Write a story about a magic backpack.";
 
-const result = await model.generateContent(prompt);
-console.log(result.response.text());
+const result = await model.generateContentStream(prompt);
+
+// Print text as it comes in.
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
