@@ -54,3 +54,113 @@ curl \
   "modelVersion": "gemini-1.5-flash-latest"
 }
 ```
+## Node.js setup
+
+```
+mkdir src && cd src
+npm init
+npm install -D jest
+npm install @google/generative-ai
+```
+
+## Node.js code
+
+---
+
+### ai-interview.js
+
+```javascript
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const prompt = "Explain how AI works";
+
+const result = await model.generateContent(prompt);
+console.log(result.response.text());
+```
+
+---
+
+### package.json needs ' "type": "module", ' added.
+
+```json
+{
+  "name": "ai_job_interviewer",
+  "version": "0.0.1",
+  "description": "Application to provide practice job interviews, using generative AI.",
+  "main": "ai-interview.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git"
+  },
+  "keywords": [
+    "ai",
+    "interview",
+    "job",
+    "practice",
+    "developer",
+    "job",
+    "transition",
+    "change",
+    "management"
+  ],
+  "author": "Cameron McEwing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research/issues"
+  },
+  "homepage": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}
+```
+---
+
+## Trial run
+
+```bash
+node ai-interview.js   
+```
+
+---
+                                                                                                                                                                               ─╯
+AI works by combining large amounts of data with fast, iterative processing and intelligent algorithms, allowing the software to learn automatically from patterns or features in the data.  There's no single "how it works" because different AI approaches use different techniques, but here's a breakdown of key concepts:
+
+**1. Data is Key:** AI systems learn from data.  The more data, generally the better the performance, though the quality of the data is crucial. This data can be structured (like tables in a database) or unstructured (like text, images, or audio).
+
+**2. Algorithms are the Brains:** These are sets of rules and statistical techniques that allow the AI to analyze data, identify patterns, and make predictions or decisions.  Different algorithms are suited to different tasks.  Some common types include:
+
+* **Machine Learning (ML):** This is a broad category where algorithms learn from data without explicit programming.  Examples include:
+    * **Supervised Learning:** The algorithm is trained on labeled data (data with known outputs).  For example, showing an AI many pictures of cats labeled "cat" and dogs labeled "dog" so it can learn to distinguish between them.
+    * **Unsupervised Learning:** The algorithm learns from unlabeled data, identifying patterns and structures on its own.  For example, clustering similar customers together based on their purchase history.
+    * **Reinforcement Learning:** The algorithm learns through trial and error, receiving rewards for correct actions and penalties for incorrect ones.  This is often used in robotics and game playing.
+
+* **Deep Learning (DL):** A subset of machine learning that uses artificial neural networks with multiple layers (hence "deep"). These networks are inspired by the structure and function of the human brain and are particularly good at processing complex, unstructured data like images and speech.  Examples include convolutional neural networks (CNNs) for image recognition and recurrent neural networks (RNNs) for natural language processing.
+
+* **Natural Language Processing (NLP):** This focuses on enabling computers to understand, interpret, and generate human language.  It's used in chatbots, machine translation, and sentiment analysis.
+
+* **Computer Vision:** This allows computers to "see" and interpret images and videos.  It's used in self-driving cars, facial recognition, and medical image analysis.
+
+
+**3. Processing Power:**  Training complex AI models requires significant computing power, often using specialized hardware like GPUs (graphics processing units) and TPUs (tensor processing units).
+
+
+**4. Iterative Process:** AI development is an iterative process.  Models are trained, tested, and refined based on their performance. This involves adjusting parameters of the algorithms, adding more data, or even changing the algorithm entirely.
+
+
+**5.  Output:** The final output of an AI system depends on its purpose.  It could be a prediction (e.g., the probability of rain tomorrow), a classification (e.g., identifying an object in an image), a decision (e.g., choosing the best move in a game), or a generated output (e.g., a translation of text).
+
+
+In short, AI works by using algorithms to find patterns in data, allowing it to learn and make predictions or decisions without explicit programming for every scenario. The complexity and sophistication vary greatly depending on the specific AI system and its application.
+
+---

@@ -1,0 +1,37 @@
+{
+  "name": "ai_job_interviewer",
+  "version": "0.0.1",
+  "description": "Application to provide practice job interviews, using generative AI.",
+  "main": "ai-interview.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git"
+  },
+  "keywords": [
+    "ai",
+    "interview",
+    "job",
+    "practice",
+    "developer",
+    "job",
+    "transition",
+    "change",
+    "management"
+  ],
+  "author": "Cameron McEwing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research/issues"
+  },
+  "homepage": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}
