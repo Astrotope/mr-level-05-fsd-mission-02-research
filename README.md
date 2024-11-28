@@ -165,6 +165,66 @@ In short, AI works by using algorithms to find patterns in data, allowing it to 
 
 ---
 
+## Text streaming output (with apiKey and modelName stored in .env)
+
+### text-stream.js
+
+```javascript
+cat text-stream.js                                                                                                                                                                                    ─╯
+import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: modelName });
+
+const prompt = "Write a story about a magic backpack.";
+
+const result = await model.generateContentStream(prompt);
+
+// Print text as it comes in.
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+```
+### .env
+
+```text
+GEMINI_API_KEY="[MY_API_KEY]"
+GEMINI_MODEL_NAME="gemini-1.5-flash"
+```
+
+### Output
+
+```bash
+node text-stream.js
+```
+
+Elara wasn't looking for a magic backpack. She was looking for a way to escape her suffocatingly ordinary life in the town of Dustbowl.  Dustbowl, true to its name, offered only dust, despair, and the monotonous chime of the town clock.  So, when she stumbled upon a dusty old rucksack in her grandmother's attic, it was merely a potential escape route from the boredom, not a portal to adventure.
+
+The backpack was unremarkable, woven from coarse brown fabric, its leather straps worn thin.  But the moment Elara slung it over her shoulders, a strange warmth bloomed in her chest.  She glanced inside – completely empty.  Yet, a whisper, faint as a sigh, seemed to emanate from the bag itself: "Where to?"
+
+Confused but curious, Elara muttered, "The Whispering Woods." The Whispering Woods, a legendary place just beyond Dustbowl, filled with stories of mischievous sprites and hidden waterfalls, was forbidden territory.
+
+Instantly, the backpack felt heavier.  Elara gasped as she felt the contents shift.  Reaching in, she pulled out a gleaming silver compass, its needle spinning wildly before settling firmly on a specific direction.  Then, a map materialized, its parchment crisp and new, detailing a path through the Woods, marked with symbols she instinctively understood.  Finally, a small, intricately carved wooden flute appeared.
+
+Following the map and compass, Elara ventured into the Whispering Woods.  The flute, played softly, calmed the chattering sprites and opened paths through thorny thickets.  The backpack itself seemed to anticipate her needs.  When she was thirsty, a flask of cool, clear water appeared. When she was hungry, a loaf of warm bread and a wedge of cheese materialized.  Once, when a grumpy badger blocked her path, a small, perfectly ripe strawberry appeared, instantly appeasing the creature.
+
+The deeper she went, the more magical the woods became.  She saw waterfalls cascading into crystal-clear pools, met shy pixies with wings like stained glass, and even danced with a mischievous satyr who taught her the secrets of the forest.  Each time she needed something – a rope to cross a chasm, a lantern to light her way – it appeared in the backpack as if by magic.
+
+Days later, she emerged from the woods, changed.  The dull ache of boredom was gone, replaced by a sense of wonder and confidence.  She returned to Dustbowl, the magic of the woods lingering in her heart and the backpack at her side.
+
+The backpack never revealed the source of its magic, but it continued to provide for her, offering not only practical items but also opportunities.  It helped her find a hidden talent for sculpting, provided her with the tools she needed to create stunning works of art, and even facilitated a scholarship to an art school far away from Dustbowl.
+
+Elara never forgot the dusty attic, the unremarkable backpack, and the whispering woods.  They reminded her that even the most ordinary lives could contain extraordinary magic, if only you were brave enough to ask for it. And, perhaps most importantly, that sometimes, the best escapes are the ones you find in the most unexpected places.
+
+---
+
 ## Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
 
 ![image](https://github.com/user-attachments/assets/1355ae28-1a44-42c9-ae39-642cbaeb4455)
