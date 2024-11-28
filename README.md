@@ -1,8 +1,5 @@
 # Google Gemini
 
-## Google Gemini - API Key
-AIzaSyCGiJs_e4yAA2Y8dJCjD_1J2cJvOfQnBpU
-
 ## Testing 
 
 ```bash
