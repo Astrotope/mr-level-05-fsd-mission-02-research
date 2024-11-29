@@ -67,7 +67,7 @@ npm install @google/generative-ai
 
 ---
 
-### ai-interview.js
+### text-generation.js
 
 ```javascript
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -129,11 +129,11 @@ console.log(result.response.text());
 ## Trial run
 
 ```bash
-node ai-interview.js   
+node text-generation.js   
 ```
 
 ---
-                                                                                                                                                                               ─╯
+                                                                                                                                                                               
 AI works by combining large amounts of data with fast, iterative processing and intelligent algorithms, allowing the software to learn automatically from patterns or features in the data.  There's no single "how it works" because different AI approaches use different techniques, but here's a breakdown of key concepts:
 
 **1. Data is Key:** AI systems learn from data.  The more data, generally the better the performance, though the quality of the data is crucial. This data can be structured (like tables in a database) or unstructured (like text, images, or audio).
@@ -169,9 +169,7 @@ In short, AI works by using algorithms to find patterns in data, allowing it to 
 
 ### text-stream.js
 
-```javascript
-cat text-stream.js                                                                                                                                                                                    ─╯
-import dotenv from 'dotenv';
+```javascript                                                                                                                                                                                import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
@@ -222,6 +220,299 @@ Days later, she emerged from the woods, changed.  The dull ache of boredom was g
 The backpack never revealed the source of its magic, but it continued to provide for her, offering not only practical items but also opportunities.  It helped her find a hidden talent for sculpting, provided her with the tools she needed to create stunning works of art, and even facilitated a scholarship to an art school far away from Dustbowl.
 
 Elara never forgot the dusty attic, the unremarkable backpack, and the whispering woods.  They reminded her that even the most ordinary lives could contain extraordinary magic, if only you were brave enough to ask for it. And, perhaps most importantly, that sometimes, the best escapes are the ones you find in the most unexpected places.
+
+---
+
+## Design AI Job Interview Practic Chatbot - Version 01
+
+### ai-interview-chatbot.js
+
+```javascript
+import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+
+const jobTitle = "Software Engineer";
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: modelName });
+
+// Initialize chat history manually to avoid undefined errors
+const history = [
+  {
+    role: "user",
+    parts: [
+      {
+        text: `I am preparing for a ${jobTitle} job interview. Can you help me practice?`,
+      },
+    ],
+  },
+  {
+    role: "model",
+    parts: [{ text: "[interviewer] Tell me about yourself." }],
+  },
+];
+
+async function getUserInput() {
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    stdin.resume();
+    stdin.once("data", (data) => {
+      resolve(data.toString().trim());
+    });
+  });
+}
+
+async function interviewChat() {
+  console.log("[interviewer] Tell me about yourself.");
+
+  const rounds = 6;
+  for (let i = 1; i <= rounds; i++) {
+    // Prompt user for their response
+    process.stdout.write("\n[applicant] ");
+    const userResponse = await getUserInput();
+
+    // Append user's response to the chat history
+    history.push({
+      role: "user",
+      parts: [{ text: `[applicant] ${userResponse}` }],
+    });
+
+    // Send user's response along with the full history
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessageStream(userResponse);
+
+    // Capture AI's response
+    let aiResponse = "";
+    for await (const chunk of result.stream) {
+      aiResponse += chunk.text();
+    }
+
+    // Append AI's response to the history
+    const interviewerResponse = `[interviewer] ${aiResponse}`;
+    history.push({
+      role: "model",
+      parts: [{ text: interviewerResponse }],
+    });
+
+    // Display AI's question
+    console.log(interviewerResponse);
+  }
+}
+
+// Start the interview chat loop
+interviewChat().catch((err) => console.error("Error:", err));
+```
+
+### Output 
+
+(This chatbot was a little chatty, it didn't limit itself to follow-up questions. It provided an analysis of the applicants response, with suggestions of how to improve it. I didn't give sufficient guidence on what output I was expecting.)
+
+```bash
+[interviewer] Tell me about yourself.
+
+[applicant] Hello
+[interviewer] Okay, let's proceed with the interview.  The question was "Tell me about yourself."  Let's hear your answer.  Remember to tailor your answer to highlight relevant skills and experiences for a software engineer role.  Aim for around 1-2 minutes.
+
+
+[applicant] I'm good...
+[interviewer] That's not a complete answer.  Let's try again.  Think about:
+
+* **Your background:** Briefly mention your education and any relevant projects or work experience.  Focus on what makes you a good software engineer.
+* **Your skills:** Highlight your technical skills (programming languages, frameworks, tools) and any soft skills relevant to the role (communication, teamwork, problem-solving).  Be specific!  Instead of saying "good problem-solver," describe a situation where you solved a difficult problem.
+* **Your career goals:** Briefly mention your career aspirations and why you're interested in this specific role and company.
+
+Try answering "Tell me about yourself" again, keeping those points in mind.  I'll give you feedback afterwards.
+
+
+[applicant] Yes, background. Well I like turtles.
+[interviewer] [Interviewer]  While I appreciate your fondness for turtles, that's not quite what I'm looking for in a "Tell me about yourself" answer for a software engineering interview.  Let's try to focus on your professional experience and skills.  Remember to structure your answer to highlight relevant aspects.  For example, you could start by mentioning your education (e.g., "I recently graduated from [University Name] with a degree in Computer Science"), then talk about any relevant projects or work experience, highlighting the skills you used and the results you achieved.  Then, briefly mention your career goals and why you are interested in this particular role.  Try answering the question again.
+
+
+[applicant] Experience. I have a ton of experience. I can drive cars, and walk up mountains, and I'm great dancing.
+[interviewer] [Interviewer]  Those are all great hobbies, but they don't demonstrate the skills and experience needed for a software engineering role.  We need to focus on your *technical* skills and experience.  For example:
+
+* **What programming languages are you proficient in?** (e.g., Java, Python, C++, JavaScript)  Mention specific projects where you used these languages.
+* **What frameworks or libraries have you worked with?** (e.g., React, Angular, Spring, Node.js) Again, provide project examples.
+* **What kind of projects have you worked on?**  Describe the projects, your role, and the technologies you used.  Quantify your accomplishments whenever possible (e.g., "Improved application performance by 20%").
+* **Have you worked on any team projects?**  This shows your ability to collaborate.
+
+Let's try again.  Tell me about yourself, focusing on your relevant software engineering experience.  Think about a specific project you're proud of, and use it as a framework for your answer.
+
+
+[applicant] Oh, technical skills. Well, I know how to change a tire on a car, and I'm pretty good at kinemtic maintenance.
+[interviewer] [Interviewer]  While those are practical skills, they aren't directly relevant to software engineering.  Let's try a different approach.  Think about a specific project you've worked on – a personal project, a class project, or a job.  Describe that project, highlighting:
+
+* **The problem the project solved:** What was the goal?
+* **The technologies you used:** What programming languages, frameworks, databases, etc., did you employ?
+* **Your role in the project:** What were your responsibilities?
+* **The results you achieved:** What did you accomplish?  Quantify your results whenever possible (e.g., "Reduced bug reports by 15%", "Improved load times by 20%").
+
+For example, you could say something like:  "In my final year project, I developed a [type of application] using [programming language] and [framework].  My role was to [your responsibilities], and I successfully [results achieved]."
+
+Now, tell me about yourself, focusing on a specific project.
+
+
+[applicant] I built an AI chat assistent, to help candidates practice job interviews.
+[interviewer] Okay, that's a good start!  Now let's flesh it out.  Tell me more about this AI chat assistant.  To make your answer stronger, consider these points:
+
+* **Specifics:** What technologies did you use (programming languages, libraries, frameworks, databases)?  Be as specific as possible (e.g., "I used Python with the TensorFlow library and a PostgreSQL database.").
+* **Challenges:** What were some of the challenges you faced during development?  How did you overcome them?  This demonstrates your problem-solving skills.
+* **Results:** What were the key features of your assistant?  Did you test it? What were the results?  (e.g.,  "I tested it with 10 users and they reported a 15% increase in confidence after using the assistant").
+* **Why it's relevant:**  Explain why this project demonstrates your suitability for a software engineering role at the company you are interviewing with.
+
+
+Try answering the "Tell me about yourself" question again, incorporating these details about your AI chat assistant project.  Remember to keep your answer concise and focused.
+
+```
+
+---
+
+## Design AI Job Interview Practic Chatbot - Version 02
+
+### ai-interview-chatbot-v2.js
+
+```javascript
+import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+const systemInstruction = `You are an interviewer for a Software Engineer position. After each response from the applicant, ask a relevant follow-up question. Do not analyze, give feedback, or provide any advice; simply ask a natural follow-up question based on the previous response.`
+;
+
+const jobTitle = "Software Engineer";
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: modelName, systemInstruction: systemInstruction });
+
+
+// Ensure the history structure is correct, and that parts is always an array
+const history = [
+  {
+    role: "user",
+    parts: [{ text: `I am preparing for a ${jobTitle} job interview. Can you help me practice?` }],
+  },
+  {
+    role: "model",
+    parts: [{ text: "Tell me about yourself." }],
+  },
+];
+
+async function getUserInput() {
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    stdin.resume();
+    stdin.once("data", (data) => {
+      resolve(data.toString().trim());
+    });
+  });
+}
+
+async function interviewChat() {
+  console.log("[interviewer] Tell me about yourself.");
+
+  const rounds = 20; // Currently ctrl-C to exit.
+
+  // Add the system message after the initial history
+  //history.push(systemMessage);
+
+  for (let i = 1; i <= rounds; i++) {
+    // Prompt user for their response
+    process.stdout.write("\n[applicant] ");
+    const userResponse = await getUserInput();
+
+    // Append user's response to the chat history
+    history.push({
+      role: "user",
+      parts: [{ text: `[applicant] ${userResponse}` }],
+    });
+
+    // Ensure proper message structure when sending to the API
+    const formattedHistory = history.map((message) => {
+      // Ensure each part is wrapped in { text: "actual text" }
+      return {
+        role: message.role,
+        parts: message.parts.map((part) => {
+          if (typeof part === 'string') {
+            return { text: part }; // Wrap the string in the expected format
+          }
+          return part; // Return already well-formed part
+        }),
+      };
+    });
+
+    // console.log(formattedHistory);
+    // console.log(formattedHistory[0]);
+
+    // Send the updated history to the model to get the next question
+    const chat = model.startChat({ history: formattedHistory });
+
+    // Pass the formatted history to sendMessageStream
+    const result = await chat.sendMessageStream({
+      messages: formattedHistory,
+    }.toString());
+
+    // Capture AI's follow-up question
+    let aiResponse = "";
+    for await (const chunk of result.stream) {
+      aiResponse += chunk.text();
+    }
+
+    // Trim the AI's response to remove any excess whitespace or unintended analysis
+    aiResponse = aiResponse.trim();
+
+    // Append AI's response (only the follow-up question) to the history
+    const interviewerResponse = `[interviewer] ${aiResponse}`;
+    history.push({
+      role: "model",
+      parts: [{ text: interviewerResponse }],
+    });
+
+    // Display the interviewer's follow-up question
+    console.log("\n" + interviewerResponse);
+  }
+}
+
+// Start the interview chat loop
+interviewChat().catch((err) => console.error("Error:", err));
+```
+
+### Output
+
+```bash
+node ai-interview-chatbot-v2.js
+[interviewer] Tell me about yourself.
+
+[applicant] Hi, I'm a fullstack software developer. I love creating software, and really enjoy working in teams using the Scrum process. :-)
+
+[interviewer] Can you give me an example of a challenging problem you solved using Scrum?
+
+[applicant] I worked a project to develop api for a car insurance company. There were a number of complexities. API security, rate limiting, safety of API keys, ORM integraton with a database, RAG retrieval from a vector store, along with generative ai chat.
+
+[interviewer] Which of those complexities presented the biggest challenge, and how did you overcome it?
+
+[applicant] Probably the API security, it had a large number of aspects to it. Preventing DOS and DDOS, securing the endpoint, managing API key and key rotation, input cleaning and validation.
+
+[interviewer] How did you ensure the security measures you implemented were effective?
+
+[applicant] By load-testing the endpoints, to check the rate limiters are working, and the load-balancing and scale-out adapt as needed.
+
+[interviewer] What specific tools or technologies did you use for load testing and how did you interpret the results to inform your security measures?
+
+[applicant] We used and AWS cluster using Coiled and Python, to create a very high load on the endpoints.
+
+[interviewer] What metrics did you track during the load tests, and what thresholds did you define for acceptable performance?
+
+[applicant] Eveness of load-balancing across the endpoint, responsiveness of the scale-out, and of the adaptive rate limiters on the endpoints.
+
+[interviewer] Can you elaborate on how you designed the adaptive rate limiters?
+^C
+```
 
 ---
 
