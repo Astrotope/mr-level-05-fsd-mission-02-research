@@ -311,7 +311,7 @@ interviewChat().catch((err) => console.error("Error:", err));
 
 (This chatbot was a little chatty, it didn't limit itself to follow-up questions. It provided an analysis of the applicants response, with suggestions of how to improve it. I didn't give sufficient guidence on what output I was expecting.)
 
-```bash
+
 [interviewer] Tell me about yourself.
 
 [applicant] Hello
@@ -367,7 +367,7 @@ Now, tell me about yourself, focusing on a specific project.
 
 Try answering the "Tell me about yourself" question again, incorporating these details about your AI chat assistant project.  Remember to keep your answer concise and focused.
 
-```
+
 
 ---
 
@@ -486,6 +486,8 @@ interviewChat().catch((err) => console.error("Error:", err));
 
 ```bash
 node ai-interview-chatbot-v2.js
+```
+
 [interviewer] Tell me about yourself.
 
 [applicant] Hi, I'm a fullstack software developer. I love creating software, and really enjoy working in teams using the Scrum process. :-)
@@ -511,6 +513,8 @@ node ai-interview-chatbot-v2.js
 [applicant] Eveness of load-balancing across the endpoint, responsiveness of the scale-out, and of the adaptive rate limiters on the endpoints.
 
 [interviewer] Can you elaborate on how you designed the adaptive rate limiters?
+
+```bash
 ^C
 ```
 
