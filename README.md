@@ -907,8 +907,6 @@ export function getSessionStatus(sessionId) {
 
 ```
 
-Note: Do we need sessions, as we send the full chat history each time? Can we make this a stateless REST API? [Christopher]
-
 ### updated package.json with new dependencies
 
 ```json
@@ -957,6 +955,592 @@ Note: Do we need sessions, as we send the full chat history each time? Can we ma
 }
 
 
+```
+
+---
+
+## Review:
+
+- Review:
+  - ***Do we need sessions***
+  - We currently send the full chat history with each API, so this could be stateless. [Christopher]
+  - Occasionally we get an error from the Google SDK. This appears to be an SDK bug. I think all we can do is catch it an re-run the SDK/API call. Going with stateless [REST](https://en.wikipedia.org/wiki/REST) will make this much easier.
+    - Error:
+```bash
+[applicant] Building the AI Chatbot
+Error: GoogleGenerativeAIError: [GoogleGenerativeAI Error]: Failed to parse stream
+    at file:///Users/cmcewing/Documents/mission_ready/level-05/mission-03/research/src/node_modules/@google/generative-ai/dist/index.mjs:709:46
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+GoogleGenerativeAIError: [GoogleGenerativeAI Error]: Failed to parse stream
+    at file:///Users/cmcewing/Documents/mission_ready/level-05/mission-03/research/src/node_modules/@google/generative-ai/dist/index.mjs:709:46
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+chatbot
+``` 
+    - Error - Research:
+      - [Failed to parse final chunk of stream message - Page 1](https://www.googlecloudcommunity.com/gc/AI-ML/Failed-to-parse-final-chunk-of-stream-message-Internal-error/m-p/784340)
+      - [Failed to parse final chunk of stream message - Page 2](https://www.googlecloudcommunity.com/gc/AI-ML/Failed-to-parse-final-chunk-of-stream-message-Internal-error/td-p/784340/page/2)
+      - [line 693 in index.mjs](https://unpkg.com/browse/@google/generative-ai@0.17.1/dist/index.mjs) 
+  - We need to add the interview analysis option to the API. This could simply be a new API endpoint that we send the current conversation to and it returns and analysis of the interview.
+
+- Action Points:
+  - Build a stateless [REST](https://en.wikipedia.org/wiki/REST) version of the API to eliminate sessions and simplify code? [Christopher]
+  - Have the API return the current chat state with each call, and add the users next response to that state.
+  - Add new function and API endpoint for interview analysis.
+    - A new system propmt will also be required to guide the analysis.
+
+---
+## Stateless AI interview Chatbot
+
+### The Plan:
+
+> Convert this into a stateless RESTful API since we're already sending the complete chat history with each request. This will make the API more scalable and easier to maintain.
+
+- Create a new stateless version of the chatbot API. 
+
+  - Create new ai-interview-chatbot-stateless.js from copy of ai-interview-chatbot-express-server.js
+  - Remove all session management code
+  - Create a single processInterviewInteraction function that takes jobTitle and history as parameters
+  - This function needs to maintain the same AI interaction logic but without storing state
+
+- Create a new stateless version of the server.js as server-stateless.js. With these changes:
+  - Simplify to just two endpoints:
+      - POST /api/interview/start: Starts a new interview and returns the first question
+      - POST /api/interview/respond: Processes a response and returns the next question
+  - Chat history will now be maintained on the client side and passed with each request
+  - Remove session-related endpoints as they're no longer needed
+- Create interview
+
+- Advantages of this approach:
+
+  - True RESTful architecture with no server-side state
+  - Better scalability as there's no need to manage sessions
+  - Simpler implementation with fewer moving parts
+  - Easier to deploy across multiple servers
+
+### Implementation
+
+#### Start server
+
+```bash
+node src/server-stateless.js
+```
+
+#### server-stateless.js
+
+```javascript
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
+import { processInterviewInteraction, analyzeInterview } from './ai-interview-chatbot-stateless.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 5998;
+
+// Start a new interview
+app.post('/api/interview/start', async (req, res) => {
+    try {
+        const { jobTitle } = req.body;
+        if (!jobTitle) {
+            return res.status(400).json({ error: 'Job title is required' });
+        }
+        
+        const question = "Tell me about yourself.";
+        res.json({ 
+            jobTitle,
+            question,
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: `I am applying for the ${jobTitle} position. Please start the interview with your first question.` }]
+                },
+                {
+                    role: "model",
+                    parts: [{ text: question }]
+                }
+            ]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Continue interview with a response
+app.post('/api/interview/respond', async (req, res) => {
+    try {
+        const { jobTitle, response, history } = req.body;
+        if (!jobTitle || !response || !history) {
+            return res.status(400).json({ 
+                error: 'Job title, response, and history are required' 
+            });
+        }
+
+        // Add user's response to history
+        const updatedHistory = [...history, {
+            role: "user",
+            parts: [{ text: response }]
+        }];
+
+        // Get next question
+        const question = await processInterviewInteraction(jobTitle, updatedHistory);
+        
+        // Add AI's question to history
+        updatedHistory.push({
+            role: "model",
+            parts: [{ text: question }]
+        });
+
+        res.json({
+            jobTitle,
+            question,
+            history: updatedHistory
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Analyze the interview
+app.post('/api/interview/analyze', async (req, res) => {
+    try {
+        const { jobTitle, history } = req.body;
+        if (!jobTitle || !history) {
+            return res.status(400).json({ 
+                error: 'Job title and history are required' 
+            });
+        }
+
+        const analysis = await analyzeInterview(jobTitle, history);
+        res.json({
+            jobTitle,
+            analysis,
+            history
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+```
+
+#### ai-interview-chatbot-stateless.js
+
+```javascript
+import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Google AI configuration
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+
+// Create Google AI instance
+const genAI = new GoogleGenerativeAI(apiKey);
+
+/**
+ * Process an interview interaction and return the next question
+ * @param {string} jobTitle - The position being interviewed for
+ * @param {Array} history - Array of previous interactions
+ * @returns {Promise<string>} The AI's next question
+ */
+async function processInterviewInteraction(jobTitle, history = []) {
+    // Configure AI to act as an interviewer
+    const systemInstruction = `You are an interviewer for a ${jobTitle} position. After each response from the applicant, ask a relevant follow-up question. Do not analyze, give feedback, or provide any advice; simply ask a natural follow-up question based on the previous response. Do not include the following prefixes in your response: "[interviewer] " and "[applicant] ".`;
+    
+    const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: systemInstruction
+    });
+
+    // If this is the first interaction, start with an opening question
+    if (history.length === 0) {
+        history = [{
+            role: "user",
+            parts: [{ text: `I am applying for the ${jobTitle} position. Please start the interview with your first question.` }]
+        }];
+    }
+
+    // Format history for the AI model
+    const formattedHistory = history.map(msg => ({
+        role: msg.role === "assistant" ? "model" : msg.role,
+        parts: Array.isArray(msg.parts) ? msg.parts : [{ text: msg.parts }]
+    }));
+
+    // Send the history to the model to get the next question
+    const chat = model.startChat({ history: formattedHistory });
+    const result = await chat.sendMessageStream(
+        formattedHistory[formattedHistory.length - 1].parts[0].text
+    );
+
+    // Capture AI's follow-up question
+    let aiResponse = "";
+    for await (const chunk of result.stream) {
+        aiResponse += chunk.text();
+    }
+
+    return aiResponse;
+}
+
+/**
+ * Analyze the interview conversation and provide feedback
+ * @param {string} jobTitle - The position being interviewed for
+ * @param {Array} history - Array of previous interactions
+ * @returns {Promise<string>} Analysis of the interview
+ */
+async function analyzeInterview(jobTitle, history = []) {
+    // Configure AI to act as an interview analyst
+    const systemInstruction = `You are an expert interview coach analyzing an interview for a ${jobTitle} position. 
+    Review the conversation and provide constructive feedback on:
+    1. The candidate's strengths and impressive points
+    2. Areas for improvement
+    3. Specific suggestions for better answers
+    4. Overall communication style
+    Be direct but encouraging, and provide specific examples from the conversation.`;
+    
+    const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        systemInstruction: systemInstruction
+    });
+
+    // Format history for the AI model
+    const formattedHistory = history.map(msg => ({
+        role: msg.role === "assistant" ? "model" : msg.role,
+        parts: Array.isArray(msg.parts) ? msg.parts : [{ text: msg.parts }]
+    }));
+
+    // Create analysis request
+    const chat = model.startChat({ history: formattedHistory });
+    const result = await chat.sendMessageStream(
+        "Please analyze this interview conversation and provide detailed feedback."
+    );
+
+    // Capture AI's analysis
+    let aiResponse = "";
+    for await (const chunk of result.stream) {
+        aiResponse += chunk.text();
+    }
+
+    return aiResponse;
+}
+
+export { processInterviewInteraction, analyzeInterview };
+```
+
+### API Endpoints
+
+#### /api/interview/start
+
+- POST http://localhost:5998/api/interview/start
+- Request Headers:
+  - Content-Type: application/json
+- Request (JSON):
+
+```bash
+curl -X POST http://localhost:5998/api/interview/start \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobTitle": "Software Engineer"
+  }' | jq '.'
+```
+
+- Response (JSON):
+
+```json
+{
+  "jobTitle": "Software Engineer",
+  "question": "Tell me about yourself.",
+  "history": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "I am applying for the Software Engineer position. Please start the interview with your first question."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Tell me about yourself."
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### /api/interview/respond
+
+- POST http://localhost:5998/api/interview/respond
+- Request Headers:
+  - Content-Type: application/json
+- Request (JSON): Reply with chat history, and user response.
+
+```bash
+curl -X POST http://localhost:5998/api/interview/respond \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobTitle": "Software Engineer",
+    "response": "I am a software engineer with 5 years of experience in full-stack development. I specialize in building scalable web applications using React, Node.js, and cloud technologies. In my current role, I lead a team of three developers and have successfully delivered several high-impact projects.",
+    "history": [
+      {
+        "role": "user",
+        "parts": [{ "text": "I am applying for the Software Engineer position. Please start the interview with your first question." }]
+      },
+      {
+        "role": "model",
+        "parts": [{ "text": "Tell me about yourself." }]
+      }
+    ]
+  }' | jq '.'
+```
+
+- Response (JSON):
+
+```json
+{
+  "jobTitle": "Software Engineer",
+  "question": "Can you describe one of those high-impact projects in more detail?\n",
+  "history": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "I am applying for the Software Engineer position. Please start the interview with your first question."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Tell me about yourself."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "I am a software engineer with 5 years of experience in full-stack development. I specialize in building scalable web applications using React, Node.js, and cloud technologies. In my current role, I lead a team of three developers and have successfully delivered several high-impact projects."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Can you describe one of those high-impact projects in more detail?\n"
+        }
+      ]
+    }
+  ]
+}
+```
+#### /api/interview/analyze
+
+- POST http://localhost:5998/api/interview/analyze
+- Request Headers:
+  - Content-Type: application/json
+- Request (JSON): Reply with chat history only.
+
+```bash
+curl -X POST http://localhost:5998/api/interview/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobTitle": "Software Engineer",
+    "history": [
+      {
+        "role": "user",
+        "parts": [{ "text": "I am applying for the Software Engineer position. Please start the interview with your first question." }]
+      },
+      {
+        "role": "model",
+        "parts": [{ "text": "Tell me about yourself." }]
+      },
+      {
+        "role": "user",
+        "parts": [{ "text": "I am a software engineer with 5 years of experience in full-stack development. I specialize in building scalable web applications using React, Node.js, and cloud technologies. In my current role, I lead a team of three developers and have successfully delivered several high-impact projects." }]
+      },
+      {
+        "role": "model",
+        "parts": [{ "text": "Can you tell me about a specific challenging project you'"'"'ve worked on and how you overcame the technical challenges?" }]
+      },
+      {
+        "role": "user",
+        "parts": [{ "text": "One of my most significant projects was a real-time collaboration platform that served over 10,000 users. We built it using WebSocket for real-time updates, React for the frontend, and Node.js with MongoDB for the backend. The biggest challenge was ensuring data consistency across multiple concurrent users, which we solved using operational transformation and a robust conflict resolution system." }]
+      },
+      {
+        "role": "model",
+        "parts": [{ "text": "That'"'"'s impressive! How did you ensure the scalability of the WebSocket connections and handle potential server load issues?" }]
+      }
+    ]
+  }' | jq '.'
+```
+
+- Response (JSON):
+
+```json
+{
+  "jobTitle": "Software Engineer",
+  "analysis": "Let's analyze this short interview snippet.  Your responses demonstrate some strengths but also highlight areas for improvement.\n\n**1. Strengths and Impressive Points:**\n\n* **Concise Self-Introduction:** Your opening statement clearly and efficiently conveyed your experience level, technical skills, and leadership responsibilities.  This is a strong start.\n* **Project Focus:**  You immediately steered the conversation toward a relevant project, demonstrating experience with a complex, large-scale application. This shows initiative and a proactive approach to showcasing your capabilities.\n* **Technical Depth (partially):** Mentioning specific technologies (React, Node.js, MongoDB, WebSockets) shows competence.  You also correctly identified a key challenge (data consistency in a real-time application).\n\n**2. Areas for Improvement:**\n\n* **Lack of Specifics and Quantifiable Results:** While you mentioned challenges and technologies, you lacked specifics in describing *how* you overcame them. Saying you used \"operational transformation\" and a \"robust conflict resolution system\" isn't enough.  The interviewer needs concrete examples.  What specific techniques did you use within operational transformation? How did your conflict resolution system work practically?  What metrics show the success of your solutions? (e.g., reduction in error rates, improved latency, increased user engagement).\n* **Insufficient Scalability Detail:**  Your answer regarding scalability was too vague. You need to elaborate on your approach to handling WebSocket connections at scale. Did you use load balancing?  Did you implement sharding?  What strategies did you employ to minimize latency and maximize throughput?  Again, quantifiable results are crucial (e.g., \"We reduced average latency by 20% by implementing...\" ).\n* **Missed Opportunity to Showcase Leadership:** You mentioned leading a team of three, but you didn't illustrate your leadership skills.  Describe a situation where you mentored a team member, resolved a conflict, or made a strategic decision that impacted the project's success.\n\n\n**3. Specific Suggestions for Better Answers:**\n\n* **Example of improved answer regarding the real-time collaboration platform:**  \"One of my most challenging projects was building a real-time collaboration platform for over 10,000 concurrent users.  We used WebSockets for real-time updates, React on the front-end, and a Node.js backend with MongoDB.  The biggest hurdle was maintaining data consistency. We addressed this by implementing operational transformation using the CRDT (Conflict-free Replicated Data Type) approach, specifically the [mention a specific CRDT type, e.g., CmRDT or CvRDT]. This allowed us to handle concurrent edits gracefully.  For conflict resolution, we implemented a last-write-wins strategy with versioning, ensuring that the most recent changes were always applied. We also implemented [mention specific techniques, e.g., heartbeat mechanisms] to detect and handle client disconnections. This resulted in a 99.99% uptime and a reduction in data inconsistency errors by 80% compared to our initial prototype.\"\n\n* **Example of improved answer regarding scalability:** \"To ensure scalability, we employed several strategies. We used a load balancer to distribute traffic across multiple Node.js servers.  We implemented horizontal scaling, adding more servers as needed based on CPU usage and network traffic.  Furthermore, we implemented connection pooling to optimize resource utilization.  These measures allowed us to handle peak loads of over 15,000 concurrent users without significant performance degradation.\"\n\n\n**4. Overall Communication Style:**\n\nYour communication style is clear and direct, but it lacks the depth and detail necessary to demonstrate your expertise effectively.  Focus on using the STAR method (Situation, Task, Action, Result) to structure your answers.  This will help you provide concise and impactful responses that highlight your skills and accomplishments.  Quantify your achievements whenever possible using metrics and numbers.  Finally, practice your answers beforehand to sound confident and articulate.  Remember, the interviewer wants to understand not just *what* you did, but *how* you did it and the impact you made.\n",
+  "history": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "I am applying for the Software Engineer position. Please start the interview with your first question."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Tell me about yourself."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "I am a software engineer with 5 years of experience in full-stack development. I specialize in building scalable web applications using React, Node.js, and cloud technologies. In my current role, I lead a team of three developers and have successfully delivered several high-impact projects."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Can you tell me about a specific challenging project you've worked on and how you overcame the technical challenges?"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "One of my most significant projects was a real-time collaboration platform that served over 10,000 users. We built it using WebSocket for real-time updates, React for the frontend, and Node.js with MongoDB for the backend. The biggest challenge was ensuring data consistency across multiple concurrent users, which we solved using operational transformation and a robust conflict resolution system."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "That's impressive! How did you ensure the scalability of the WebSocket connections and handle potential server load issues?"
+        }
+      ]
+    }
+  ]
+}
+```
+
+- Response as Markdown:
+
+Let's analyze this short interview snippet.  Your responses demonstrate some strengths but also highlight areas for improvement.
+
+**1. Strengths and Impressive Points:**
+
+* **Concise Self-Introduction:** Your opening statement clearly and efficiently conveyed your experience level, technical skills, and leadership responsibilities.  This is a strong start.
+* **Project Focus:**  You immediately steered the conversation toward a relevant project, demonstrating experience with a complex, large-scale application. This shows initiative and a proactive approach to showcasing your capabilities.
+* **Technical Depth (partially):** Mentioning specific technologies (React, Node.js, MongoDB, WebSockets) shows competence.  You also correctly identified a key challenge (data consistency in a real-time application).
+
+**2. Areas for Improvement:**
+
+* **Lack of Specifics and Quantifiable Results:** While you mentioned challenges and technologies, you lacked specifics in describing *how* you overcame them. Saying you used "operational transformation" and a "robust conflict resolution system" isn't enough.  The interviewer needs concrete examples.  What specific techniques did you use within operational transformation? How did your conflict resolution system work practically?  What metrics show the success of your solutions? (e.g., reduction in error rates, improved latency, increased user engagement).
+* **Insufficient Scalability Detail:**  Your answer regarding scalability was too vague. You need to elaborate on your approach to handling WebSocket connections at scale. Did you use load balancing?  Did you implement sharding?  What strategies did you employ to minimize latency and maximize throughput?  Again, quantifiable results are crucial (e.g., "We reduced average latency by 20% by implementing..." ).
+* **Missed Opportunity to Showcase Leadership:** You mentioned leading a team of three, but you didn't illustrate your leadership skills.  Describe a situation where you mentored a team member, resolved a conflict, or made a strategic decision that impacted the project's success.
+
+
+**3. Specific Suggestions for Better Answers:**
+
+* **Example of improved answer regarding the real-time collaboration platform:**  "One of my most challenging projects was building a real-time collaboration platform for over 10,000 concurrent users.  We used WebSockets for real-time updates, React on the front-end, and a Node.js backend with MongoDB.  The biggest hurdle was maintaining data consistency. We addressed this by implementing operational transformation using the CRDT (Conflict-free Replicated Data Type) approach, specifically the [mention a specific CRDT type, e.g., CmRDT or CvRDT]. This allowed us to handle concurrent edits gracefully.  For conflict resolution, we implemented a last-write-wins strategy with versioning, ensuring that the most recent changes were always applied. We also implemented [mention specific techniques, e.g., heartbeat mechanisms] to detect and handle client disconnections. This resulted in a 99.99% uptime and a reduction in data inconsistency errors by 80% compared to our initial prototype."
+
+* **Example of improved answer regarding scalability:** "To ensure scalability, we employed several strategies. We used a load balancer to distribute traffic across multiple Node.js servers.  We implemented horizontal scaling, adding more servers as needed based on CPU usage and network traffic.  Furthermore, we implemented connection pooling to optimize resource utilization.  These measures allowed us to handle peak loads of over 15,000 concurrent users without significant performance degradation."
+
+
+**4. Overall Communication Style:**
+
+Your communication style is clear and direct, but it lacks the depth and detail necessary to demonstrate your expertise effectively.  Focus on using the STAR method (Situation, Task, Action, Result) to structure your answers.  This will help you provide concise and impactful responses that highlight your skills and accomplishments.  Quantify your achievements whenever possible using metrics and numbers.  Finally, practice your answers beforehand to sound confident and articulate.  Remember, the interviewer wants to understand not just *what* you did, but *how* you did it and the impact you made.
+
+#### API Error Handling
+
+- Both endpoints handle errors with appropriate HTTP status codes:
+
+  - 400 Bad Request: Missing required fields
+  - 500 Internal Server Error: Server-side errors
+
+#### Maintaining History in stateless REST API
+
+- The history array in both endpoints maintains the conversation context, alternating between "user" and "model" roles, with each message containing parts with text content.
+
+
+### Conversation Flow
+
+```text
+Client                                  Stateless API
+  |                                          |
+  |  1. POST /api/interview/start           |
+  |  {"jobTitle": "Software Engineer"}      |
+  |---------------------------------------->|
+  |                                         |
+  |  Response: First question + history     |
+  |<----------------------------------------|
+  |                                         |
+  |  2. POST /api/interview/respond         |
+  |  {jobTitle, response, history}          |
+  |---------------------------------------->|
+  |                                         |
+  |  Response: Next question + history      |
+  |<----------------------------------------|
+  |                                         |
+  |  3. POST /api/interview/respond         |
+  |  {jobTitle, response, history}          |
+  |---------------------------------------->|
+  |                                         |
+  |  Response: Next question + history      |
+  |<----------------------------------------|
+  |                                         |
+  |  4. POST /api/interview/analyze         |
+  |  {jobTitle, history}                    |
+  |---------------------------------------->|
+  |                                         |
+  |  Response: Analysis + history           |
+  |<----------------------------------------|
+  |                                         |
+  
+```
+
+### History JSON Structure
+
+```text
+
+History Structure (passed in each request):
++------------------+
+|     history      |
+|  +-----------+   |
+|  | Message 1 |   |
+|  |  - role   |   |
+|  |  - parts  |   |
+|  +-----------+   |
+|  | Message 2 |   |
+|  |  - role   |   |
+|  |  - parts  |   |
+|  +-----------+   |
+|      ...         |
++------------------+
 ```
 
 ---
