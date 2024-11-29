@@ -1,5 +1,17 @@
 # Google Gemini
 
+## Setup 
+
+```bash
+mkdir mission-03-research 
+cd mission-03-research
+git clone https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git
+cd mr-level-05-fsd-mission-03-research
+npm install
+[add your google-ai as GEMINI_API_KEY to .env]
+[set the name of the google-ai model you wish to use in .env as GEMINI_MODEL_NAME. Choose a model that will accept text, and return text.]
+```
+
 ## Testing 
 
 ```bash
@@ -57,10 +69,7 @@ curl \
 ## Node.js setup
 
 ```
-mkdir src && cd src
-npm init
-npm install -D jest
-npm install @google/generative-ai
+already done.
 ```
 
 ## Node.js code
@@ -129,7 +138,7 @@ console.log(result.response.text());
 ## Trial run
 
 ```bash
-node text-generation.js   
+node src/text-generation.js   
 ```
 
 ---
@@ -200,7 +209,7 @@ GEMINI_MODEL_NAME="gemini-1.5-flash"
 ### Output
 
 ```bash
-node text-stream.js
+node src/text-stream.js
 ```
 
 Elara wasn't looking for a magic backpack. She was looking for a way to escape her suffocatingly ordinary life in the town of Dustbowl.  Dustbowl, true to its name, offered only dust, despair, and the monotonous chime of the town clock.  So, when she stumbled upon a dusty old rucksack in her grandmother's attic, it was merely a potential escape route from the boredom, not a portal to adventure.
@@ -311,6 +320,9 @@ interviewChat().catch((err) => console.error("Error:", err));
 
 (This chatbot was a little chatty, it didn't limit itself to follow-up questions. It provided an analysis of the applicants response, with suggestions of how to improve it. I didn't give sufficient guidence on what output I was expecting.)
 
+```bash
+node src/ai-interview-chatbot.js
+```
 
 [interviewer] Tell me about yourself.
 
@@ -485,7 +497,7 @@ interviewChat().catch((err) => console.error("Error:", err));
 ### Output
 
 ```bash
-node ai-interview-chatbot-v2.js
+node src/ai-interview-chatbot-v2.js
 ```
 
 [interviewer] Tell me about yourself.
@@ -516,6 +528,435 @@ node ai-interview-chatbot-v2.js
 
 ```bash
 ^C
+```
+
+---
+
+## Create API endpoints for the AI interview practice chatbot using express.js.
+
+### Folder structure
+
+```text
+research/               # Root directory
+├── .env                # Environment variables
+├── package.json       
+├── node_modules/      
+└── src/              
+    ├── server.js
+    └── ai-interview-chatbot-v4.js
+```
+
+### API Endpoints
+
+
+#### 1. Start Interview
+
+- POST http://localhost:5998/api/interview/start
+
+- Request Headers:
+  - Content-Type: application/json
+
+- Request Body:
+```json
+{
+    "jobTitle": "Software Engineer"
+}
+```
+
+- Response Body:
+```json
+{
+    "sessionId": "1709123456789",  // timestamp-based ID
+    "firstQuestion": "Tell me about yourself."
+}
+```
+
+#### 2. Send Response & Get Next Question
+- POST http://localhost:5998/api/interview/respond
+
+- Request Headers:
+  - Content-Type: application/json
+
+- Request Body:
+```json
+{
+    "sessionId": "1709123456789",
+    "response": "I have 5 years of experience..."
+}
+```
+
+- Response Body:
+```json
+{
+    "done": false,
+    "message": "[interviewer] What specific technologies have you worked with?",
+    "round": 1
+}
+```
+// Or when interview is complete:
+```json
+{
+    "done": true,
+    "message": "Interview session complete. Thank you for practicing!"
+}
+```
+
+#### 3. Check Status
+- GET http://localhost:5998/api/interview/status/1709123456789
+
+- Response Body:
+```json
+{
+    "jobTitle": "Software Engineer",
+    "currentRound": 3,
+    "maxRounds": 6,
+    "isComplete": false
+}
+```
+
+#### 4. End Session
+- POST http://localhost:5998/api/interview/end
+
+- Request Headers:
+  - Content-Type: application/json
+
+- Request Body:
+```json
+{
+    "sessionId": "1709123456789"
+}
+```
+
+- Response Body:
+```json
+{
+    "success": true
+}
+```
+
+#### 5. Error Response
+
+```json
+{
+    "error": "Error message description"
+}
+
+```
+
+#### 6. Response headers
+
+
+- Content-Type: application/json
+- Access-Control-Allow-Origin: *  // Due to CORS middleware
+
+
+### server.js
+
+```javascript
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
+import { createSession, processResponse, endSession, getSessionStatus } from './ai-interview-chatbot-express-server.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 5998;
+
+// Start a new interview session
+app.post('/api/interview/start', (req, res) => {
+  try {
+    const { jobTitle } = req.body;
+    if (!jobTitle) {
+      return res.status(400).json({ error: 'Job title is required' });
+    }
+    const session = createSession(jobTitle);
+    res.json(session);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Send a response and get the next question
+app.post('/api/interview/respond', async (req, res) => {
+  try {
+    const { sessionId, response } = req.body;
+    if (!sessionId || !response) {
+      return res.status(400).json({ error: 'Session ID and response are required' });
+    }
+    const result = await processResponse(sessionId, response);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get current session status
+app.get('/api/interview/status/:sessionId', (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const status = getSessionStatus(sessionId);
+    res.json(status);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// End an interview session
+app.post('/api/interview/end', (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+    const result = endSession(sessionId);
+    res.json({ success: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+```
+
+### ai-interview-chatbot-express-server.js
+
+```javascript
+/**
+ * AI Interview Chatbot Express Server Module
+ * This module implements a job interview simulation using Google's Generative AI.
+ * It manages multiple interview sessions and provides API endpoints for interaction.
+ */
+
+import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Google AI configuration
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+
+// Create Google AI instance
+const genAI = new GoogleGenerativeAI(apiKey);
+
+// Global session storage using Map for O(1) lookup
+const sessions = new Map();
+
+/**
+ * InterviewSession Class
+ * Manages a single interview session, including:
+ * - Chat history
+ * - Round tracking
+ * - AI model interaction
+ */
+class InterviewSession {
+  constructor(jobTitle) {
+    this.jobTitle = jobTitle;
+    this.currentRound = 0;
+    this.maxRounds = 6;
+    // Configure AI to act as an interviewer for the specific job
+    this.systemInstruction = `You are an interviewer for a ${jobTitle} position. After each response from the applicant, ask a relevant follow-up question. Do not analyze, give feedback, or provide any advice; simply ask a natural follow-up question based on the previous response. Do not include the following prefixes in your response: "[interviewer] " and "[applicant] ".`;
+    this.model = genAI.getGenerativeModel({ model: modelName, systemInstruction: this.systemInstruction });
+    // Initialize chat history with the opening context
+    this.history = [
+      {
+        role: "user",
+        parts: [{ text: `I am preparing for a ${jobTitle} job interview. Can you help me practice?` }],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Tell me about yourself." }],
+      },
+    ];
+  }
+
+  /**
+   * Process user's response and generate next interview question
+   * @param {string} userResponse - The user's answer to the previous question
+   * @returns {Object} Response object containing next question or completion message
+   */
+  async processResponse(userResponse) {
+    // Check if interview is complete
+    if (this.currentRound >= this.maxRounds) {
+      return { 
+        done: true, 
+        message: "Interview session complete. Thank you for practicing!" 
+      };
+    }
+
+    // Add user's response to chat history
+    this.history.push({
+      role: "user",
+      parts: [{ text: `[applicant] ${userResponse}` }],
+    });
+
+    // Format history for API consumption
+    const formattedHistory = this.history.map((message) => ({
+      role: message.role,
+      parts: message.parts.map((part) => {
+        if (typeof part === 'string') {
+          return { text: part };
+        }
+        return part;
+      }),
+    }));
+
+    // Send the updated history to the model to get the next question
+    const chat = this.model.startChat({ history: formattedHistory });
+
+    // Send request to AI model
+    const result = await chat.sendMessageStream({
+      messages: formattedHistory,
+    }.toString());
+
+    // Capture AI's follow-up question
+    let aiResponse = "";
+    for await (const chunk of result.stream) {
+      aiResponse += chunk.text();
+    }
+
+    // Clean up AI response
+    aiResponse = aiResponse.trim();
+
+    // Format response with interviewer prefix
+    const interviewerResponse = `[interviewer] ${aiResponse}`;
+    
+    // Update chat history with AI's question
+    this.history.push({
+      role: "model",
+      parts: [{ text: interviewerResponse }],
+    });
+
+    // Increment round counter
+    this.currentRound++;
+
+    // Return formatted response
+    return {
+      done: false,
+      message: interviewerResponse,
+      round: this.currentRound
+    };
+  }
+}
+
+/**
+ * Create new interview session
+ * @param {string} jobTitle - The position being interviewed for
+ * @returns {Object} Session details including ID and first question
+ */
+export function createSession(jobTitle) {
+  const sessionId = Date.now().toString();
+  const session = new InterviewSession(jobTitle);
+  sessions.set(sessionId, session);
+  return {
+    sessionId,
+    firstQuestion: "Tell me about yourself."
+  };
+}
+
+/**
+ * Process user response in existing session
+ * @param {string} sessionId - The session identifier
+ * @param {string} response - User's response to previous question
+ * @returns {Promise<Object>} Next question or completion message
+ * @throws {Error} If session not found
+ */
+export async function processResponse(sessionId, response) {
+  const session = sessions.get(sessionId);
+  if (!session) {
+    throw new Error("Session not found");
+  }
+  return await session.processResponse(response);
+}
+
+/**
+ * End an interview session
+ * @param {string} sessionId - The session to end
+ * @returns {boolean} True if session was successfully removed
+ */
+export function endSession(sessionId) {
+  return sessions.delete(sessionId);
+}
+
+/**
+ * Get current status of an interview session
+ * @param {string} sessionId - The session to check
+ * @returns {Object} Session status including progress and completion
+ * @throws {Error} If session not found
+ */
+export function getSessionStatus(sessionId) {
+  const session = sessions.get(sessionId);
+  if (!session) {
+    throw new Error("Session not found");
+  }
+  return {
+    jobTitle: session.jobTitle,
+    currentRound: session.currentRound,
+    maxRounds: session.maxRounds,
+    isComplete: session.currentRound >= session.maxRounds
+  };
+}
+
+```
+
+Note: Do we need sessions, as we send the full chat history each time? Can we make this a stateless REST API? [Christopher]
+
+### updated package.json with new dependencies
+
+```json
+{
+  "name": "ai_job_interviewer",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Application to provide practice job interviews, using generative AI.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git"
+  },
+  "keywords": [
+    "ai",
+    "interview",
+    "job",
+    "practice",
+    "developer",
+    "job",
+    "transition",
+    "change",
+    "management"
+  ],
+  "author": "Cameron McEwing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research/issues"
+  },
+  "homepage": "https://github.com/Astrotope/mr-level-05-fsd-mission-03-research#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  }
+}
+
+
 ```
 
 ---
