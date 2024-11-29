@@ -1,4 +1,4 @@
-# Google Gemini
+# Google Gemini - AI Interview Chatbot Design
 
 ## Setup 
 
