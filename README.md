@@ -10,7 +10,7 @@
     <li><a href="#google-ai-sdk-text-streaming">Google AI SDK - Text Streaming Test</a></li>
     <li><a href="#ai-interview-chatbot-terminal">Design AI Job Interview Practice Chatbot (Terminal) - Version 01</a></li>
     <li><a href="#ai-interview-chatbot-terminal-02">Design AI Job Interview Practice Chatbot (Terminal) - Version 02</a></li>
-    <li><a href="#ai-interview-chatbot-api-stateful-endpoints">Create API endpoints for the AI interview practice chatbot using express.js</a></li>
+    <li><a href="#ai-interview-chatbot-api-stateful-endpoints">Create Stateful API Endpoints for the AI Interview Practice Chatbot using express.js</a></li>
     <li><a href="#review-ai-api-stateful-endpoints">Review of Stateful Chatbot API</a></li>
     <li><a href="#ai-api-stateless-rest-endpoints">AI Interview Chatbot API - Stateless (REST)</a></li>
     <li><a href="#ai-practice-interview-chatbot-frontend">AI Practice Interview Chatbot - Frontend Design</a></li>
@@ -103,7 +103,7 @@ npm install
 node ./src/text-generation.js
 ```
 
-### text-generation.js
+### Code: text-generation.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -125,7 +125,7 @@ console.log(result.response.text());
 
 ---
 
-### package.json needs ' "type": "module", ' added.
+### Configuraition: package.json needs ' "type": "module", ' added.
 
 ```json
 {
@@ -168,10 +168,10 @@ console.log(result.response.text());
 ```
 ---
 
-## Trial run
+## Run:
 
 ```bash
-node src/text-generation.js   
+node ./src/text-generation.js   
 ```
 
 ---
@@ -212,7 +212,7 @@ In short, AI works by using algorithms to find patterns in data, allowing it to 
 <a id="google-ai-sdk-text-streaming"></a>
 ## (3) Google (Node.js) AI SDK - Text streaming 
 
-### text-stream.js
+### Code: text-stream.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -236,14 +236,14 @@ for await (const chunk of result.stream) {
   process.stdout.write(chunkText);
 }
 ```
-### .env
+### Configuration: .env
 
 ```text
 GEMINI_API_KEY="[MY_API_KEY]"
 GEMINI_MODEL_NAME="gemini-1.5-flash"
 ```
 
-### Output
+### Run:
 
 ```bash
 node src/text-stream.js
@@ -274,7 +274,7 @@ Elara never forgot the dusty attic, the unremarkable backpack, and the whisperin
 <a id="ai-interview-chatbot-terminal"></a>
 ## (4) Design AI Job Interview Practice Chatbot (Terminal) - Version 01
 
-### ai-interview-chatbot.js
+### Code: ai-interview-chatbot.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -356,7 +356,7 @@ async function interviewChat() {
 interviewChat().catch((err) => console.error("Error:", err));
 ```
 
-### Output 
+### Run: 
 
 (This chatbot was a little chatty, it didn't limit itself to follow-up questions. It provided an analysis of the applicants response, with suggestions of how to improve it. I didn't give sufficient guidence on what output I was expecting.)
 
@@ -426,7 +426,7 @@ Try answering the "Tell me about yourself" question again, incorporating these d
 <a id="ai-interview-chatbot-terminal-02"></a>
 ## (5) Design AI Job Interview Practice Chatbot (Terminal) - Version 02
 
-### ai-interview-chatbot-v2.js
+### Code: ai-interview-chatbot-v2.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -535,10 +535,10 @@ async function interviewChat() {
 interviewChat().catch((err) => console.error("Error:", err));
 ```
 
-### Output
+### Run:
 
 ```bash
-node src/ai-interview-chatbot-v2.js
+node ./src/ai-interview-chatbot-v2.js
 ```
 
 [interviewer] Tell me about yourself.
@@ -576,7 +576,7 @@ node src/ai-interview-chatbot-v2.js
 ---
 
 <a id="ai-interview-chatbot-api-stateful-endpoints"></a>
-## (6) Create API endpoints for the AI interview practice chatbot using express.js
+## (6) Create Stateful API Endpoints for the AI Interview Practice Chatbot using express.js
 
 ### Folder structure
 
@@ -694,7 +694,7 @@ research/               # Root directory
 - Access-Control-Allow-Origin: *  // Due to CORS middleware
 
 
-### server.js
+### Code: server.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -769,7 +769,7 @@ app.listen(PORT, () => {
 
 ```
 
-### ai-interview-chatbot-express-server.js
+### Code: ai-interview-chatbot-express-server.js
 
 ```javascript
 /**
@@ -951,7 +951,7 @@ export function getSessionStatus(sessionId) {
 
 ```
 
-### updated package.json with new dependencies
+### Configuration: updated package.json with new dependencies
 
 ```json
 {
@@ -1067,7 +1067,7 @@ chatbot
   - Simpler implementation with fewer moving parts
   - Easier to deploy across multiple servers
 
-### Implementation
+### Implementation (Much, much simpler.) [Good call Christopher]
 
 #### Start server
 
@@ -1075,7 +1075,7 @@ chatbot
 node src/server-stateless.js
 ```
 
-#### server-stateless.js
+#### Code: server-stateless.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -1180,7 +1180,7 @@ app.listen(PORT, () => {
 });
 ```
 
-#### ai-interview-chatbot-stateless.js
+#### Code: ai-interview-chatbot-stateless.js
 
 ```javascript
 import dotenv from 'dotenv';
@@ -1285,7 +1285,7 @@ async function analyzeInterview(jobTitle, history = []) {
 export { processInterviewInteraction, analyzeInterview };
 ```
 
-### API Endpoints
+### API Endpoints:
 
 #### /api/interview/start
 
@@ -1397,6 +1397,7 @@ curl -X POST http://localhost:5998/api/interview/respond \
   ]
 }
 ```
+
 #### /api/interview/analyze
 
 - POST http://localhost:5998/api/interview/analyze
@@ -1497,7 +1498,7 @@ curl -X POST http://localhost:5998/api/interview/analyze \
 }
 ```
 
-- Response as Markdown:
+- Response as Markdown: (Will convert AI Markdown to HTML, to display in Frontend)
 
 Let's analyze this short interview snippet.  Your responses demonstrate some strengths but also highlight areas for improvement.
 
@@ -1654,7 +1655,7 @@ History Structure (passed in each request):
 
 	- Use generative AI to build the application.  You are encouraged to use Google Gemini API because it is currently free of charge.
 
-### UI Mockup
+### UI Mockup:
 
 #### Initial UI
 
@@ -1678,7 +1679,7 @@ History Structure (passed in each request):
 ![image](https://github.com/user-attachments/assets/7d84cc2f-7999-4ca3-b20d-ea47d432a926)
 
 
-### UI Code
+### UI Code:
 
 #### App.jsx
 
