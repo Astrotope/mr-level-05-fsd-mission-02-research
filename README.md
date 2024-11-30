@@ -1,7 +1,7 @@
 # Google Gemini - AI Interview Chatbot Design
 <a id="readme-top"></a>
 
-#### Click ⏵ to Expand
+> [Click ⏵ to Expand TOC]
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
