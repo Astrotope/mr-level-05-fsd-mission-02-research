@@ -17,6 +17,7 @@
     <li><a href="#ai-practice-interview-chatbot-frontend">AI Practice Interview Chatbot - Frontend Design</a></li>
     <li><a href="#gemini-1-5-flash-8b-model-spec">Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat)</a></li>
     <li><a href="#tdd-plan">Test Driven Development Plan</a></li>
+    <li><a href="#gemini-sdk-notes">Gemini Chat SDK - Key Things to Know</a></li>
   </ol>
 </details>
 
@@ -2393,7 +2394,7 @@ Standardizes API response format.
 
 ---
 
-##### handleStreamResponse (I'm not sure if we need this)
+##### handleStreamResponse (This is potentially a good refactor.)
 Manages streaming responses from AI model.
 
 **Input Parameters:**
@@ -2528,3 +2529,64 @@ router.post('/analyze', validateAnalysisRequest, async (req, res, next) => {
 
 export default router;
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<a id="gemini-sdk-notes"></a>
+
+
+## (12) Gemini Chat SDK - Key Things to Know
+
+Here are the 4 key things your programming team should know about the Gemini Chat SDK:
+
+* System Instructions are Powerful
+	* Set via systemInstruction in model configuration
+	* Defines AI's role, behavior, and constraints
+	* Must be set during model initialization, not in chat history
+	* Example: 
+
+	```javascript
+	genAI.getGenerativeModel({ 
+		model: modelName, 
+		systemInstruction: instruction 
+	})
+	```
+
+* Chat History Structure is Strict
+*
+	* Messages must follow specific format:
+
+	```javascript
+	{
+	  role: "user" | "model",
+	  parts: [{ text: string }]
+	}
+	```
+
+	* 	Order matters - messages should alternate between user and model
+	* 	Can't modify previous messages once sent
+	* 	History must be provided in full for each request
+
+
+* Responses are Always Streamed
+	* All responses come as streams by default
+	* Must handle with async iteration:
+
+	```javascript
+	for await (const chunk of result.stream) {
+	  response += chunk.text();
+	}
+	```
+
+	* No built-in non-streaming option
+	* Need to accumulate chunks for complete response
+
+* Error Handling is Critical
+	* API can fail for various reasons (rate limits, invalid input, network issues)
+	* Always wrap calls in try-catch blocks
+	* Stream can fail mid-response
+	* Need to handle both initialization and streaming errors
+	* Important to implement retries for reliability
+
+These points cover the most important aspects that affect implementation and reliability of applications using the Gemini Chat SDK.
