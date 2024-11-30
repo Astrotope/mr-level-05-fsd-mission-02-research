@@ -18,8 +18,9 @@
   </ol>
 </details>
 
-## (1) Google Gemini API Test with cURL
+---
 <a id="google-gemini-api-test"></a>
+## (1) Google Gemini API Test with cURL
 
 ### Test 
 
@@ -77,10 +78,12 @@ curl \
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (2) Google AI (Node.js) SDK - Text Generation Test
 <a id="gemini-sdk-test-generation"></a>
+## (2) Google AI (Node.js) SDK - Text Generation Test
+
 
 ### Setup 
 
@@ -203,10 +206,11 @@ AI works by combining large amounts of data with fast, iterative processing and 
 In short, AI works by using algorithms to find patterns in data, allowing it to learn and make predictions or decisions without explicit programming for every scenario. The complexity and sophistication vary greatly depending on the specific AI system and its application.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (3) Google (Node.js) AI SDK - Text streaming 
 <a id="google-ai-sdk-text-streaming"></a>
+## (3) Google (Node.js) AI SDK - Text streaming 
 
 ### text-stream.js
 
@@ -264,10 +268,11 @@ The backpack never revealed the source of its magic, but it continued to provide
 Elara never forgot the dusty attic, the unremarkable backpack, and the whispering woods.  They reminded her that even the most ordinary lives could contain extraordinary magic, if only you were brave enough to ask for it. And, perhaps most importantly, that sometimes, the best escapes are the ones you find in the most unexpected places.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (4) Design AI Job Interview Practice Chatbot (Terminal) - Version 01
 <a id="ai-interview-chatbot-terminal"></a>
+## (4) Design AI Job Interview Practice Chatbot (Terminal) - Version 01
 
 ### ai-interview-chatbot.js
 
@@ -415,10 +420,11 @@ Now, tell me about yourself, focusing on a specific project.
 Try answering the "Tell me about yourself" question again, incorporating these details about your AI chat assistant project.  Remember to keep your answer concise and focused.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (5) Design AI Job Interview Practice Chatbot (Terminal) - Version 02
 <a id="ai-interview-chatbot-terminal-02"></a>
+## (5) Design AI Job Interview Practice Chatbot (Terminal) - Version 02
 
 ### ai-interview-chatbot-v2.js
 
@@ -566,10 +572,11 @@ node src/ai-interview-chatbot-v2.js
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (6) Create API endpoints for the AI interview practice chatbot using express.js
 <a id="ai-interview-chatbot-api-stateful-endpoints"></a>
+## (6) Create API endpoints for the AI interview practice chatbot using express.js
 
 ### Folder structure
 
@@ -995,10 +1002,11 @@ export function getSessionStatus(sessionId) {
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (7) Review of Stateful Chatbot API
 <a id="review-ai-api-stateful-endpoints"></a>
+## (7) Review of Stateful Chatbot API
 
 - Review:
   - ***Do we need sessions***
@@ -1586,10 +1594,11 @@ History Structure (passed in each request):
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (9) AI Practice Interview Chatbot - Frontend Design
 <a id="ai-practice-interview-chatbot-frontend"></a>
+## (9) AI Practice Interview Chatbot - Frontend Design
 
 ### Technologies
 
@@ -2040,10 +2049,11 @@ npm run dev
 ![image](https://github.com/user-attachments/assets/62f0763e-60e7-4757-a98c-e56080875230)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## (10) Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
 <a id="gemini-1-5-flash-8b-model-spec"></a>
+## (10) Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
 
 ![image](https://github.com/user-attachments/assets/1355ae28-1a44-42c9-ae39-642cbaeb4455)
 
