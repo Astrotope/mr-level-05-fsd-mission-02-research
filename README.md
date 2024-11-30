@@ -1990,6 +1990,11 @@ cd frontend
 npm run dev
 ```
 
+#### Interesting AI Bug
+
+![image](https://github.com/user-attachments/assets/62f0763e-60e7-4757-a98c-e56080875230)
+
+
 ---
 
 ## Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
