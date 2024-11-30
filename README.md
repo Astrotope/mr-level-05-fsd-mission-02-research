@@ -2179,7 +2179,7 @@ src/
 
 > This plan focuses on making the code more modular, easier to test, and following the DRY principle while maintaining the current functionality.
 
-### Testing Framework Tools we may Use
+### Testing Framework Tools we may/could potentially use
 
 * Jest Extensions
 	* @types/jest - For better TypeScript/IDE support
@@ -2208,6 +2208,8 @@ src/
 ### Function Description - Existing & New (Refactored)
 
 #### Existing Functions
+
+---
 
 ##### processInterviewInteraction (Existing)
 Processes an interview interaction and generates the next interview question.
