@@ -2204,3 +2204,325 @@ src/
 * Mocking Utilities
 	* sinon - Spies, stubs, and mocks
 	* faker or @faker-js/faker - Generate test data
+
+### Function Description - Existing & New (Refactored)
+
+#### Existing Functions
+
+##### processInterviewInteraction (Existing)
+Processes an interview interaction and generates the next interview question.
+
+**Input Parameters:**
+- `jobTitle` (string): The position being interviewed for
+- `history` (Array): Array of previous interactions in the format:
+  ```javascript
+  {
+    role: "user" | "model",
+    parts: [{ text: string }]
+  }
+  ```
+
+**Output:**
+- Returns (Promise<string>): The AI's next interview question
+
+**Function:**
+- Configures AI as an interviewer for specific job position
+- Processes conversation history
+- Generates contextually relevant follow-up questions
+- Handles streaming responses from AI
+
+---
+
+##### analyzeInterview (Existing)
+Analyzes the complete interview conversation and provides detailed feedback.
+
+**Input Parameters:**
+- `jobTitle` (string): The position being interviewed for
+- `history` (Array): Complete interview conversation history
+
+**Output:**
+- Returns (Promise<string>): Detailed interview analysis and feedback
+
+**Function:**
+- Configures AI as an interview analyst
+- Reviews entire conversation
+- Generates structured feedback on performance
+- Provides specific improvement suggestions
+
+---
+
+#### New Functions
+
+##### formatMessageHistory (This would be a good refactor)
+Standardizes message format between client and AI service.
+
+**Input Parameters:**
+- `messages` (Array): Raw message array from client
+- `format` (string): Target format ('ai' | 'client')
+
+**Output:**
+- Returns (Array): Formatted message array
+
+**Function:**
+- Converts between different message formats
+- Validates message structure
+- Handles edge cases and malformed messages
+
+---
+
+##### validateInterviewRequest (Check if Gemini response is valid, before we use it)
+Validates incoming interview interaction requests.
+
+**Input Parameters:**
+- `request` (Object): Request body containing:
+  - `jobTitle` (string)
+  - `response` (string)
+  - `history` (Array)
+
+**Output:**
+- Returns (Object): 
+  ```javascript
+  {
+    isValid: boolean,
+    errors: string[]
+  }
+  ```
+
+**Function:**
+- Validates required fields
+- Checks data types
+- Ensures proper message history structure
+
+---
+
+##### validateAnalysisRequest (Checks if Gemini analysis response is valid, befor displaying it)
+Validates interview analysis requests.
+
+**Input Parameters:**
+- `request` (Object): Request body containing:
+  - `jobTitle` (string)
+  - `history` (Array)
+
+**Output:**
+- Returns (Object):
+  ```javascript
+  {
+    isValid: boolean,
+    errors: string[]
+  }
+  ```
+
+**Function:**
+- Validates required fields
+- Ensures minimum conversation length
+- Checks history structure
+
+---
+
+##### createSystemInstruction (This is a good refactor, it is a factory for system instructions. This could simply be a JSON array rather than a function)
+Generates system instructions for AI model based on context.
+
+**Input Parameters:**
+- `type` (string): Instruction type ('interviewer' | 'analyst')
+- `jobTitle` (string): Position being interviewed for
+- `options` (Object): Additional configuration options
+
+**Output:**
+- Returns (string): Formatted system instruction
+
+**Function:**
+- Creates role-specific instructions
+- Incorporates job context
+- Handles different instruction types
+
+---
+
+##### processAIResponse (Converts raw AI response into something that can be displayed)
+Processes and formats AI model responses.
+
+**Input Parameters:**
+- `response` (Object): Raw AI response
+- `format` (string): Desired output format
+
+**Output:**
+- Returns (Object): Formatted response object
+
+**Function:**
+- Extracts relevant information
+- Formats response structure
+- Handles errors and edge cases
+
+---
+
+##### initializeAIModel (I think this is good, put the AI model setup into its own function)
+Initializes and configures the AI model.
+
+**Input Parameters:**
+- `config` (Object): Configuration options
+  - `apiKey` (string)
+  - `modelName` (string)
+  - `systemInstruction` (string)
+
+**Output:**
+- Returns (Object): Configured AI model instance
+
+**Function:**
+- Sets up AI configuration
+- Initializes model with parameters
+- Handles initialization errors
+
+---
+
+##### formatAPIResponse (This sounds like a duplicate of processAIResponse)
+Standardizes API response format.
+
+**Input Parameters:**
+- `data` (any): Response data
+- `status` (string): Response status
+- `error` (Error?): Optional error object
+
+**Output:**
+- Returns (Object): Formatted API response
+
+**Function:**
+- Creates consistent response structure
+- Handles success and error cases
+- Includes relevant metadata
+
+---
+
+##### handleStreamResponse (I'm not sure if we need this)
+Manages streaming responses from AI model.
+
+**Input Parameters:**
+- `stream` (ReadableStream): AI response stream
+- `options` (Object): Stream handling options
+
+**Output:**
+- Returns (Promise<string>): Assembled response
+
+**Function:**
+- Processes streaming data
+- Assembles complete response
+- Handles stream errors
+
+---
+
+##### validateJobTitle (I guess we should do some basic checks on this, as some malicious inputs could cause the AI to go beyond it guardrails)
+Validates job title input.
+
+**Input Parameters:**
+- `jobTitle` (string): Job title to validate
+- `options` (Object): Validation options
+
+**Output:**
+- Returns (Object):
+  ```javascript
+  {
+    isValid: boolean,
+    error?: string
+  }
+  ```
+
+**Function:**
+- Checks string length
+- Validates format
+- Filters inappropriate content
+
+---
+
+##### validateMessageHistory (A function to check if the message history is in the correct format.)
+Validates conversation history structure and content.
+
+**Input Parameters:**
+- `history` (Array): Message history array
+- `options` (Object): Validation options
+
+**Output:**
+- Returns (Object):
+  ```javascript
+  {
+    isValid: boolean,
+    errors: string[]
+  }
+  ```
+
+**Function:**
+- Validates message structure
+- Checks sequence integrity
+- Ensures proper role alternation
+
+### Function Description - Refactored server.js
+
+#### TBD - Some possible changes.
+
+- simpler server.js that redirects to route-handler.js to handle the API routes.
+
+- simpler server.js - potential code
+
+```javascript
+import express from 'express';
+import cors from 'cors';
+import { interviewRoutes } from './routes/interviewRoutes.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { configureApp } from './config/app.js';
+
+const app = express();
+configureApp(app);  // Middleware setup
+
+// Routes
+app.use('/api/interview', interviewRoutes);
+
+// Error handling
+app.use(errorHandler);
+
+export default app;
+```
+
+- route-handler.js
+
+```javascript
+// Example structure for interviewRoutes.js
+import { Router } from 'express';
+import { validateStartRequest, validateResponseRequest, validateAnalysisRequest } from '../middleware/validation.js';
+import { formatResponse } from '../utils/responseFormatter.js';
+import { InterviewService } from '../services/interviewService.js';
+
+const router = Router();
+const interviewService = new InterviewService();
+
+// Start a new interview
+router.post('/start', validateStartRequest, async (req, res, next) => {
+    try {
+        const { jobTitle } = req.body;
+        const result = await interviewService.startInterview(jobTitle);
+        res.json(formatResponse(result, 'Interview started successfully'));
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Continue interview with a response
+router.post('/respond', validateResponseRequest, async (req, res, next) => {
+    try {
+        const { jobTitle, response, history } = req.body;
+        const result = await interviewService.processResponse(jobTitle, response, history);
+        res.json(formatResponse(result, 'Response processed successfully'));
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Analyze the interview
+router.post('/analyze', validateAnalysisRequest, async (req, res, next) => {
+    try {
+        const { jobTitle, history } = req.body;
+        const result = await interviewService.analyzeInterview(jobTitle, history);
+        res.json(formatResponse(result, 'Interview analyzed successfully'));
+    } catch (error) {
+        next(error);
+    }
+});
+
+export default router;
+```
