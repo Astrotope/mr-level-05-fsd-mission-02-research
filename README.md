@@ -16,6 +16,7 @@
     <li><a href="#ai-api-stateless-rest-endpoints">AI Interview Chatbot API - Stateless (REST)</a></li>
     <li><a href="#ai-practice-interview-chatbot-frontend">AI Practice Interview Chatbot - Frontend Design</a></li>
     <li><a href="#gemini-1-5-flash-8b-model-spec">Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat)</a></li>
+    <li><a href="#tdd-plan">Test Driven Development Plan</a></li>
   </ol>
 </details>
 
@@ -2061,3 +2062,145 @@ npm run dev
 
 ![image](https://github.com/user-attachments/assets/1355ae28-1a44-42c9-ae39-642cbaeb4455)
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<a id="tdd-plan"></a>
+
+## (11) Test Driven Development Plan.
+
+
+### Plan for code modularization and testing:
+
+* Modularization Opportunities
+  - AI Service Layer
+	* Create a separate AIService class to handle all Gemini AI interactions
+	* Move model initialization and chat handling logic into this class
+	* This will make it easier to mock AI responses for testing
+* Message Formatter
+	* Extract message formatting logic into a separate utility
+	* Will handle conversion between different message formats
+	* Can be reused across both interview processing and analysis
+* Validation Layer
+	* Create a separate validation module
+	* Move input validation logic from route handlers
+	* Can be reused across different endpoints
+* Configuration Module
+	* Separate environment configuration into its own module
+	* Will make it easier to manage different configurations for testing
+* Response Formatter
+	* Create a utility for standardizing API responses
+	* Will ensure consistent error and success response formats
+
+	
+### Proposed Function Structure
+
+```text
+src/
+├── services/
+│   ├── AIService.js
+│   └── InterviewService.js
+├── utils/
+│   ├── messageFormatter.js
+│   ├── responseFormatter.js
+│   └── validator.js
+├── config/
+│   └── config.js
+└── routes/
+    └── interviewRoutes.js
+```
+
+### Test Categories and Test Cases
+
+* Unit Tests: Message Formatting
+	* Format user messages to AI format
+	* Format AI responses to client format
+	* Handle empty messages
+	* Handle malformed message structures
+	* Validate message role conversions
+* Unit Tests: Input Validation
+	* Validate job title presence
+	* Validate response content
+	* Validate history structure
+	* Handle missing required fields
+	* Handle invalid data types
+* Unit Tests: AI Service
+	* Initialize AI model with correct configuration
+	* Format system instructions
+	* Handle chat history correctly
+	* Process streaming responses
+	* Handle API errors
+* Unit Tests: Interview Service
+	* Generate initial interview question
+	* Process interview responses
+	* Generate interview analysis
+	* Handle empty history
+	* Handle invalid job titles
+* Integration Tests: API Endpoints
+	* Start new interview
+	* Send interview responses
+	* Generate interview analysis
+	* Handle invalid requests
+	* Test error responses
+* Integration Tests: End-to-End Flow
+	* Complete interview flow
+	* Multiple question-answer exchanges
+	* Analysis of complete interview
+	* Error recovery scenarios
+
+### Functions to be Unit Tested
+
+* Existing Functions:
+	* processInterviewInteraction
+	* analyzeInterview
+* New Functions to Create and Test:
+	* formatMessageHistory
+	* validateInterviewRequest
+	* validateAnalysisRequest
+	* createSystemInstruction
+	* processAIResponse
+	* initializeAIModel
+	* formatAPIResponse
+	* handleStreamResponse
+	* validateJobTitle
+	* validateMessageHistory
+* Testing Strategy Notes
+	* Use dependency injection for AI service to allow mocking
+	* Create fixtures for common test data
+	* Use snapshot testing for response formats
+	* Implement error boundary testing
+	* Use mock responses for AI interactions
+	* Test both success and failure paths
+	* Include performance testing for streaming responses
+	* Test rate limiting and error handling
+	* Validate response formats and structures
+	* Test configuration loading and validation
+
+> This plan focuses on making the code more modular, easier to test, and following the DRY principle while maintaining the current functionality.
+
+### Testing Framework Tools we may Use
+
+* Jest Extensions
+	* @types/jest - For better TypeScript/IDE support
+	* jest-environment-node - For Node.js environment testing
+	* jest-mock - Enhanced mocking capabilities
+* Testing Utilities
+	* supertest - For HTTP endpoint testing
+	* nock - For mocking HTTP requests
+	* mock-socket - For WebSocket testing if needed
+	* jest-mock-extended - For advanced mocking capabilities
+* Validation Libraries
+	* joi or yup - For input validation
+	* ajv - For JSON schema validation
+* Development Tools
+	* eslint-plugin-jest - ESLint rules for Jest
+	* prettier - Code formatting
+	* husky - Git hooks for pre-commit testing
+	* lint-staged - Run linters on staged files
+* Code Coverage
+	* istanbul - Code coverage reporting
+	* jest-junit - JUnit report generation for CI/CD
+* Mocking Utilities
+	* sinon - Spies, stubs, and mocks
+	* faker or @faker-js/faker - Generate test data
