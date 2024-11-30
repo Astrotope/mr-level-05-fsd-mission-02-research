@@ -1607,6 +1607,11 @@ History Structure (passed in each request):
 
 ![image](https://github.com/user-attachments/assets/96c2233c-b657-4d26-b026-42dfbf204f53)
 
+---
+
+![image](https://github.com/user-attachments/assets/9a6b5e3a-d2d1-43f4-9772-f25df9c2768c)
+
+
 
 #### Conversation flow
 
