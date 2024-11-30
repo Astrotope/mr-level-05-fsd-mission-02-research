@@ -1621,6 +1621,7 @@ History Structure (passed in each request):
 #### Final Analysis
 
 ![image](https://github.com/user-attachments/assets/8ba806c6-d9ab-43bc-b7d9-b9783baca705)
+![image](https://github.com/user-attachments/assets/0578416c-53bc-4f77-9470-a2930d6bb8a1)
 ![image](https://github.com/user-attachments/assets/7d84cc2f-7999-4ca3-b20d-ea47d432a926)
 
 
