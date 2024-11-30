@@ -1,18 +1,27 @@
 # Google Gemini - AI Interview Chatbot Design
+<a id="readme-top"></a>
 
-## Setup 
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="#google-gemini-api-test">Google Gemini API Test with cURL</a></li>
+    <li><a href="#gemini-sdk-test-generation">Google AI SDK - Text Generation Test</a></li>
+    <li><a href="#google-ai-sdk-text-streaming">Google AI SDK - Text Streaming Test</a></li>
+    <li><a href="#ai-interview-chatbot-terminal">Design AI Job Interview Practice Chatbot (Terminal) - Version 01</a></li>
+    <li><a href="#ai-interview-chatbot-terminal-02">Design AI Job Interview Practice Chatbot (Terminal) - Version 02</a></li>
+    <li><a href="#ai-interview-chatbot-api-stateful-endpoints">Create API endpoints for the AI interview practice chatbot using express.js</a></li>
+    <li><a href="#review-ai-api-stateful-endpoints">Review of Stateful Chatbot API</a></li>
+    <li><a href="#ai-api-stateless-rest-endpoints">AI Interview Chatbot API - Stateless (REST)</a></li>
+    <li><a href="#ai-practice-interview-chatbot-frontend">AI Practice Interview Chatbot - Frontend Design</a></li>
+    <li><a href="#gemini-1-5-flash-8b-model-spec">Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat)</a></li>
+  </ol>
+</details>
 
-```bash
-mkdir mission-03-research 
-cd mission-03-research
-git clone https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git
-cd mr-level-05-fsd-mission-03-research
-npm install
-[add your google-ai as GEMINI_API_KEY to .env]
-[set the name of the google-ai model you wish to use in .env as GEMINI_MODEL_NAME. Choose a model that will accept text, and return text.]
-```
+## (1) Google Gemini API Test with cURL
+<a id="google-gemini-api-test"></a>
 
-## Testing 
+### Test 
 
 ```bash
 curl \
@@ -21,7 +30,7 @@ curl \
   -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=[MY_API_KEY]"
 ```
 
-## Results
+### Results
 
 ```json
 {
@@ -66,23 +75,44 @@ curl \
   "modelVersion": "gemini-1.5-flash-latest"
 }
 ```
-## Node.js setup
 
-```
-already done.
-```
-
-## Node.js code
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
+
+## (2) Google AI (Node.js) SDK - Text Generation Test
+<a id="gemini-sdk-test-generation"></a>
+
+### Setup 
+
+```bash
+mkdir mission-03-research 
+cd mission-03-research
+git clone https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git
+cd mr-level-05-fsd-mission-03-research
+npm install
+[add your google-ai as GEMINI_API_KEY to .env]
+[set the name of the google-ai model you wish to use in .env as GEMINI_MODEL_NAME. Choose a model that will accept text, and return text.]
+```
+
+### Run
+
+```bash
+node ./src/text-generation.js
+```
 
 ### text-generation.js
 
 ```javascript
+import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY;
+const modelName = process.env.GEMINI_MODEL_NAME;
+
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: modelName });
 
 const prompt = "Explain how AI works";
 
@@ -172,13 +202,16 @@ AI works by combining large amounts of data with fast, iterative processing and 
 
 In short, AI works by using algorithms to find patterns in data, allowing it to learn and make predictions or decisions without explicit programming for every scenario. The complexity and sophistication vary greatly depending on the specific AI system and its application.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Text streaming output (with apiKey and modelName stored in .env)
+## (3) Google (Node.js) AI SDK - Text streaming 
+<a id="google-ai-sdk-text-streaming"></a>
 
 ### text-stream.js
 
-```javascript                                                                                                                                                                                import dotenv from 'dotenv';
+```javascript
+import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
@@ -230,9 +263,11 @@ The backpack never revealed the source of its magic, but it continued to provide
 
 Elara never forgot the dusty attic, the unremarkable backpack, and the whispering woods.  They reminded her that even the most ordinary lives could contain extraordinary magic, if only you were brave enough to ask for it. And, perhaps most importantly, that sometimes, the best escapes are the ones you find in the most unexpected places.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Design AI Job Interview Practic Chatbot - Version 01
+## (4) Design AI Job Interview Practice Chatbot (Terminal) - Version 01
+<a id="ai-interview-chatbot-terminal"></a>
 
 ### ai-interview-chatbot.js
 
@@ -379,11 +414,11 @@ Now, tell me about yourself, focusing on a specific project.
 
 Try answering the "Tell me about yourself" question again, incorporating these details about your AI chat assistant project.  Remember to keep your answer concise and focused.
 
-
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Design AI Job Interview Practic Chatbot - Version 02
+## (5) Design AI Job Interview Practice Chatbot (Terminal) - Version 02
+<a id="ai-interview-chatbot-terminal-02"></a>
 
 ### ai-interview-chatbot-v2.js
 
@@ -530,9 +565,11 @@ node src/ai-interview-chatbot-v2.js
 ^C
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Create API endpoints for the AI interview practice chatbot using express.js.
+## (6) Create API endpoints for the AI interview practice chatbot using express.js
+<a id="ai-interview-chatbot-api-stateful-endpoints"></a>
 
 ### Folder structure
 
@@ -957,9 +994,11 @@ export function getSessionStatus(sessionId) {
 
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Review:
+## (7) Review of Stateful Chatbot API
+<a id="review-ai-api-stateful-endpoints"></a>
 
 - Review:
   - ***Do we need sessions***
@@ -988,8 +1027,11 @@ chatbot
   - Add new function and API endpoint for interview analysis.
     - A new system propmt will also be required to guide the analysis.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
-## Stateless AI interview Chatbot
+
+## (8) AI Interview Chatbot API - Stateless (REST)
+<a id="ai-api-stateless-rest-endpoints"></a>
 
 ### The Plan:
 
@@ -1543,9 +1585,11 @@ History Structure (passed in each request):
 +------------------+
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Frontend design
+## (9) AI Practice Interview Chatbot - Frontend Design
+<a id="ai-practice-interview-chatbot-frontend"></a>
 
 ### Technologies
 
@@ -1995,10 +2039,11 @@ npm run dev
 
 ![image](https://github.com/user-attachments/assets/62f0763e-60e7-4757-a98c-e56080875230)
 
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ---
 
-## Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
+## (10) Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
+<a id="gemini-1-5-flash-8b-model-spec"></a>
 
 ![image](https://github.com/user-attachments/assets/1355ae28-1a44-42c9-ae39-642cbaeb4455)
 
