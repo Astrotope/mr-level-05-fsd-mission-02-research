@@ -1605,13 +1605,18 @@ History Structure (passed in each request):
 
 #### Initial UI
 
+![image](https://github.com/user-attachments/assets/96c2233c-b657-4d26-b026-42dfbf204f53)
 
 
 #### Conversation flow
 
+![image](https://github.com/user-attachments/assets/a64e985c-6ffc-4c23-b805-f905a7791dcf)
 
 
 #### Final Analysis
+
+![image](https://github.com/user-attachments/assets/8ba806c6-d9ab-43bc-b7d9-b9783baca705)
+![image](https://github.com/user-attachments/assets/7d84cc2f-7999-4ca3-b20d-ea47d432a926)
 
 
 ### UI Code
