@@ -2046,7 +2046,7 @@ cd frontend
 npm run dev
 ```
 
-#### Interesting AI Bug
+#### Interesting AI Bug (Ellipsis Bug - AI will continue the users response if they finish it with an ellipsis.)
 
 ![image](https://github.com/user-attachments/assets/62f0763e-60e7-4757-a98c-e56080875230)
 
