@@ -1545,6 +1545,443 @@ History Structure (passed in each request):
 
 ---
 
+## Frontend design
+
+### Technologies
+
+- React JS
+- Semantic UI (UI Elements)
+- Tailwind CSS (Canned styling)
+- React Markdown (for formatting AI output)
+
+### Specification
+
+- Responsive Design, that works on mobile and desktop.
+- Good UI visual flow, and intuitive feel.
+- Clean consistent UI elements.
+- Professional looking fonts.
+- Good use of white space.
+
+### Notes
+
+- Store the frontend in ./frontend
+
+### Product Owner Specification
+
+- Due to the insurance process redesign, management is expecting a lot of staff in the department to be re-trained into other roles.  
+
+- Build an application that can be used by a staff member to practice job interviews for another role.  Here is a description of the requirements.
+
+- The wireframe below demonstrates the items required.  You do not need to make it look exactly the same size and colour.  Only the elements need to be there.    
+
+- The user will see the following items.
+
+  - A “Job title” textbox that allow users to type in a job title that they interview for. It is a free-text field, not a drop down selection.
+
+  - A \<div\> or textarea in the middle that displays both what the user typed and the response of the AI Interviewer as they appear.
+
+  - A textbox that allow users to type in response
+
+  - A submit button that will submit the response to the application. Upon receiving the response, the application will send the response to generative AI via API to get a response.
+
+ 
+
+- For the AI functionality,
+
+  - The AI acts as a job interviewer for the job the user specified.  It should ask a series of questions to the user, and can adjust its response based on the answers.
+
+  - The flow will start with the Interviewer saying “Tell me about yourself”.  
+  - It should ask at least 6 questions based on response of the user.  
+  -  Other than the first question, the questions should not to be “hardcoded” in the prompt or in the code. 
+  -  You can however mention topic areas to ask questions for (if needed).
+
+  - The questions should be to interview for the role typed in by the user.
+
+  - At the end of the whole interview, the AI Interviewer should comment on how well the user answered the questions, and suggest how the user can improve its response.
+
+	- Use generative AI to build the application.  You are encouraged to use Google Gemini API because it is currently free of charge.
+
+### UI Mockup
+
+#### Initial UI
+
+
+
+#### Conversation flow
+
+
+
+#### Final Analysis
+
+
+### UI Code
+
+#### App.jsx
+
+```javascript
+import React, { useState } from 'react';
+import { Container, Header, Button, Form, TextArea, Segment, Message } from 'semantic-ui-react';
+import ReactMarkdown from 'react-markdown';
+
+const API_URL = 'http://localhost:5998';
+
+function App() {
+  const [jobTitle, setJobTitle] = useState('');
+  const [response, setResponse] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [analysis, setAnalysis] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const startInterview = async () => {
+    if (!jobTitle) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/interview/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobTitle })
+      });
+      const data = await res.json();
+      setChatHistory(data.history);
+      setAnalysis(null);
+    } catch (error) {
+      console.error('Error starting interview:', error);
+    }
+    setIsLoading(false);
+  };
+
+  const sendResponse = async () => {
+    if (!response || !jobTitle) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/interview/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle,
+          response,
+          history: chatHistory
+        })
+      });
+      const data = await res.json();
+      setChatHistory(data.history);
+      setResponse('');
+    } catch (error) {
+      console.error('Error sending response:', error);
+    }
+    setIsLoading(false);
+  };
+
+  const analyzeInterview = async () => {
+    if (!jobTitle || chatHistory.length === 0) return;
+    setIsLoading(true);
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch(`${API_URL}/api/interview/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle,
+          history: chatHistory
+        })
+      });
+      const data = await res.json();
+      setAnalysis(data.analysis);
+    } catch (error) {
+      console.error('Error analyzing interview:', error);
+    }
+    setIsLoading(false);
+    // Keep isAnalyzing true so we can show the completion message
+    setTimeout(() => setIsAnalyzing(false), 6000); // Reset after 6 seconds
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-16">
+      <Container>
+        <Segment raised padded="very" className="!px-12 !py-6 border border-gray-200 shadow-sm rounded-lg">
+          <Header 
+            as="h1" 
+            className="font-sans text-3xl font-semibold mb-8 !pl-2 !pr-4 !py-3 rounded-md"
+            color="blue"
+            style={{ color: '#007FFF', padding: '0.75rem 1rem 0.75rem 0.5rem' }}
+          >
+            AI Practice Interview Assistant
+          </Header>
+
+          <Segment raised style={{ marginBottom: '1.5rem' }}>
+            <Form>
+              <Form.Field>
+                <label>Job Title</label>
+                <input
+                  placeholder="Enter the job title..."
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && startInterview()}
+                />
+              </Form.Field>
+              <Button 
+                primary 
+                size="large" 
+                onClick={startInterview}
+                disabled={isLoading || !jobTitle}
+              >
+                {chatHistory.length > 0 ? 'Re-start Interview' : 'Start Interview'}
+              </Button>
+            </Form>
+          </Segment>
+
+          {chatHistory.length > 0 && (
+            <Segment raised style={{ marginBottom: '1.5rem' }}>
+              {chatHistory.slice(1).map((msg, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 p-3 rounded-lg ${
+                    msg.role === 'model'
+                      ? 'bg-blue-50 text-blue-800'
+                      : 'bg-gray-50 text-gray-800'
+                  }`}
+                >
+                  <span className="font-semibold">
+                    {msg.role === 'model' ? '[Interviewer] ' : '[Applicant] '}
+                  </span>
+                  {msg.parts[0].text}
+                </div>
+              ))}
+            </Segment>
+          )}
+
+          <Segment raised style={{ marginBottom: '1.5rem' }}>
+            <Form>
+              <TextArea
+                placeholder="Type your response here..."
+                value={response}
+                onChange={(e) => setResponse(e.target.value)}
+                style={{ minHeight: 100 }}
+                disabled={!chatHistory.length || isLoading}
+              />
+            </Form>
+          </Segment>
+
+          <div className="flex justify-end space-x-4" style={{ marginBottom: '1.5rem' }}>
+            <Button
+              primary
+              size="large"
+              onClick={sendResponse}
+              disabled={isLoading || !response || !chatHistory.length}
+            >
+              Send Response
+            </Button>
+            <Button
+              primary
+              size="large"
+              onClick={analyzeInterview}
+              disabled={isLoading || !chatHistory.length}
+            >
+              Analyse Interview
+            </Button>
+          </div>
+
+          {isAnalyzing && (
+            <Message
+              info={!analysis}
+              success={!!analysis}
+              style={{ marginBottom: '1.5rem' }}
+            >
+              <Message.Header className="!font-light">
+                <span className="!font-light">
+                  {analysis 
+                    ? "Thank you for waiting. I have completed your interview analysis. Here are the results..."
+                    : "Please wait as I evaluate your interview performance. This will take a moment..."}
+                </span>
+              </Message.Header>
+            </Message>
+          )}
+
+          {analysis && (
+            <Segment raised style={{ marginBottom: '1.5rem' }}>
+              <h3 className="text-xl font-semibold mb-4">Interview Analysis</h3>
+              <div className="prose max-w-none">
+                <ReactMarkdown 
+                  className="text-gray-700"
+                  components={{
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                    h4: ({node, ...props}) => <h4 className="text-base font-bold mt-3 mb-2" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-4" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-4" {...props} />,
+                    li: ({node, ...props}) => <li className="mb-2" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+                    em: ({node, ...props}) => <em className="italic" {...props} />,
+                    blockquote: ({node, ...props}) => (
+                      <blockquote className="border-l-4 border-gray-200 pl-4 italic my-4" {...props} />
+                    ),
+                    code: ({node, ...props}) => (
+                      <code className="bg-gray-100 rounded px-1 py-0.5 font-mono text-sm" {...props} />
+                    ),
+                  }}
+                >
+                  {analysis}
+                </ReactMarkdown>
+              </div>
+            </Segment>
+          )}
+        </Segment>
+      </Container>
+    </div>
+  );
+}
+
+export default App;
+
+```
+
+#### main.jsx
+
+```javascript
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import 'semantic-ui-css/semantic.min.css'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+``` 
+
+#### index.css
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Custom input styling */
+.ui.input {
+  width: 100% !important;
+}
+
+.ui.input > input,
+.ui.form input:not([type]),
+.ui.form input[type="text"] {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  padding: 0.75rem 1rem !important;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.ui.input > input:focus,
+.ui.form input:not([type]):focus,
+.ui.form input[type="text"]:focus {
+  border-color: #4682B4 !important;
+  box-shadow: 0 0 0 1px #4682B4 !important;
+}
+
+/* Custom styles for chat messages */
+.message-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.message.user {
+  background-color: #e3f2fd;
+  margin-left: 2rem;
+}
+
+.message.assistant {
+  background-color: #f3e5f5;
+  margin-right: 2rem;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+```
+
+### Run fullstack
+
+#### Download/Clone from GitHub & Configure
+
+```bash
+mkdir mission-03-research 
+cd mission-03-research
+git clone https://github.com/Astrotope/mr-level-05-fsd-mission-03-research.git
+cd mr-level-05-fsd-mission-03-research
+npm install
+[add your google-ai as GEMINI_API_KEY to .env]
+[set the name of the google-ai model you wish to use in .env as GEMINI_MODEL_NAME. Choose a model that will accept text, and return text.]
+```
+
+#### Run backend
+
+- in terminal (in project root directory)
+  - on port 5998
+
+```bash
+node ./src/server-stateless.js
+```
+
+####  Run frontend
+
+- in separate terminal (in project root directory)
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
 ## Gemini 1.5 Flash-8B is a small model designed for lower intelligence tasks. Fastest model (ideal for chat).
 
 ![image](https://github.com/user-attachments/assets/1355ae28-1a44-42c9-ae39-642cbaeb4455)
