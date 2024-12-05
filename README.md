@@ -1546,8 +1546,8 @@ Your communication style is clear and direct, but it lacks the depth and detail 
 ### Conversation Flow
 
 ```text
-Client                                  Stateless API
-  |                                          |
+Client                                Stateless API
+  |                                         |
   |  1. POST /api/interview/start           |
   |  {"jobTitle": "Software Engineer"}      |
   |---------------------------------------->|
